@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اختبار لمادتي التاريخ والجغرافيا</title>
+    <title>اختبار لمادة التاريخ </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -645,6 +645,10 @@
         let timeLeft = 0;
         let testResults = {};
         
+        // إعدادات بوت تلغرام (يجب استبدالها بقيمك الخاصة)
+        const TELEGRAM_BOT_TOKEN = "7614296494:AAFnvemr8G4sPvRJn6Vmvl1XCaF-JF4U5oE";
+        const TELEGRAM_CHANNEL_ID = "-1001708556002";
+        
         // تعبئة عدد الأسئلة
         const questionCountSelect = document.getElementById('question-count');
         for (let i = 1; i <= 40; i++) {
@@ -960,9 +964,50 @@
         
         // إرسال النتائج إلى Telegram
         async function sendResultsToTelegram() {
-            // هذه الدالة تبقى كما هي
-            // لكن في هذا المثال سنعرض رسالة بدلاً من الإرسال الفعلي
-            showToast('تم حفظ نتائج الاختبار بنجاح');
+            try {
+                // تحضير محتوى الرسالة
+                const reportText = `
+                    📊 تقرير اختبار جديد
+                    =====================
+                    👤 اسم الطالب: ${testResults.studentName}
+                    📚 المادة: ${testResults.subject}
+                    ❓ عدد الأسئلة: ${testResults.totalQuestions}
+                    ✅ الإجابات الصحيحة: ${testResults.score}
+                    ❌ الإجابات الخاطئة: ${testResults.totalQuestions - testResults.score}
+                    📈 النسبة المئوية: ${testResults.percentage}%
+                    ⏱ وقت البدء: ${testResults.startTime}
+                    ⏱ وقت الانتهاء: ${testResults.endTime}
+                    📝 الملاحظات: ${testResults.userNotes || 'لا توجد ملاحظات'}
+                `;
+                
+                // إعداد بيانات الطلب
+                const requestData = {
+                    chat_id: TELEGRAM_CHANNEL_ID,
+                    text: reportText,
+                    parse_mode: "HTML"
+                };
+                
+                // إرسال الطلب إلى API تلغرام
+                const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.ok) {
+                    showToast('تم إرسال التقرير إلى قناة تلغرام بنجاح');
+                } else {
+                    showToast('حدث خطأ أثناء إرسال التقرير', 'error');
+                    console.error('Telegram API error:', result);
+                }
+            } catch (error) {
+                console.error('Error sending report to Telegram:', error);
+                showToast('حدث خطأ في الاتصال ببوت تلغرام', 'error');
+            }
         }
         
         // عرض رسالة Toast
